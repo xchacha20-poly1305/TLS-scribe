@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	
+
 	"github.com/spf13/cobra"
 	scribe "github.com/xchacha20-poly1305/TLS-scribe"
 )
+
+var version string = "Unknown"
 
 var (
 	mainCommand = &cobra.Command{
@@ -16,8 +19,16 @@ var (
 			if err != nil {
 				log.Println(err)
 			}
-			
+
 			print(cert)
+		},
+	}
+
+	versionCmd = &cobra.Command{
+		Use:   "version",
+		Short: "Print the version.",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Version: %s", version)
 		},
 	}
 )

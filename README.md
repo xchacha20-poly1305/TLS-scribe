@@ -44,7 +44,7 @@ Flags:
 * [spf13/cobra](https://github.com/spf13/cobra)
 
 
-* [quic-go/quic-go](https://github.com/quic-go/quic-go)
+* [SagerNet/quic-go](https://github.com/SagerNet/quic-go)
 
 * ~~[refraction-networking/utls](https://github.com/refraction-networking/utls)~~
 

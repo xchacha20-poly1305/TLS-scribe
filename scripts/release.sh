@@ -1,5 +1,7 @@
 #!/bin/bash
 
+BUILD_TAGS="with_quic"
+
 if [[ -z "$TAG_NAME" ]]; then
     TAG_NAME=$(git rev-parse --short HEAD || echo "Unknow")
 fi
@@ -21,7 +23,7 @@ for os in "${platforms[@]}"; do
 
         echo "Building ${output_name}..."
         GOOS="$os" GOARCH="$arch" go build -o "build/releases/${output_name}" \
-            -trimpath -ldflags "-w -s -X main.VERSION=${TAG_NAME}" ./cmd/scribe
+            -tags "$BUILD_TAGS" -trimpath -ldflags "-w -s -X main.version=${TAG_NAME}" ./cmd/scribe
     done
 
 done
