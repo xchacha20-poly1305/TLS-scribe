@@ -1,35 +1,36 @@
-//go:build with_quic
-
 package scribe
 
 import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"net"
 	"time"
 
 	quic "github.com/sagernet/quic-go"
 )
 
-func (q *QuicCertGetter) GetCert(timeout time.Duration, conn net.Conn) (cert []*x509.Certificate, err error) {
-	if conn == nil {
-		conn, err = net.DialTimeout("udp", q.Target, timeout)
-		if err == nil {
+// TODO: use custom conn
+func (q *QuicCertGetter) GetCert(timeout time.Duration, _ net.Conn) (cert []*x509.Certificate, err error) {
+	hostPort := net.JoinHostPort(q.Target.String(), q.Port)
+
+	/*
+		addr, err := net.ResolveUDPAddr("udp", hostPort)
+		if err != nil {
 			return
 		}
-	}
-	udpConn, isUDPConn := conn.(*net.UDPConn)
-	if !isUDPConn {
-		return nil, errors.New("not UDP conn")
-	}
-	var packetConn net.PacketConn = udpConn
 
-	addr, err := net.ResolveUDPAddr("udp", q.Target)
-	if err != nil {
-		return
-	}
+		if conn == nil {
+			conn, err = net.DialUDP("udp", nil, addr)
+			if err != nil {
+				return
+			}
+		}
+		udpConn, isUDPConn := conn.(*net.UDPConn)
+		if !isUDPConn {
+			return nil, errors.New("not UDP conn")
+		}
+	*/
 
 	tCfg := q.tlsConfig()
 
@@ -43,7 +44,7 @@ func (q *QuicCertGetter) GetCert(timeout time.Duration, conn net.Conn) (cert []*
 		Versions: []quic.VersionNumber{quic.Version2, quic.Version1},
 	}
 
-	qConn, err := quic.Dial(ctx, packetConn, addr, tCfg, qCfg)
+	qConn, err := quic.DialAddr(ctx, hostPort, tCfg, qCfg)
 	if err != nil {
 		return
 	}

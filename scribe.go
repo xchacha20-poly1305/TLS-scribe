@@ -28,15 +28,25 @@ func Execute(target, serverName string) (result string, err error) {
 	if p == "" {
 		p = "443"
 	}
-	target = net.JoinHostPort(u.Hostname(), p)
+
+	hostName := u.Hostname()
+	ip := net.ParseIP(hostName)
+	if ip == nil {
+		ips, err := net.LookupHost(hostName)
+		if err != nil {
+			return "", err
+		}
+		ip = net.ParseIP(ips[0])
+	}
 
 	if serverName == "" {
-		serverName = u.Hostname()
+		serverName = hostName
 	}
 	// log.Println("dest: ", dest, " sni: ", serverName)
 
 	g, err := New(strings.ToLower(u.Scheme), CertGetterOption{
-		Target:     target,
+		Target:     ip,
+		Port:       p,
 		ServerName: serverName,
 	})
 	if err != nil {
@@ -52,11 +62,11 @@ func Execute(target, serverName string) (result string, err error) {
 	case "sha256", "sha-256", "sha", "openssl", "fingerprint": // openssl fingerprint
 		result = fingerprintSHA256(cert[0])
 	default: // pem
-		pemCerts := make([]string, 0)
-		for _, cert := range cert {
+		pemCerts := []string{}
+		for _, c := range cert {
 			pemCert := &pem.Block{
 				Type:  "CERTIFICATE",
-				Bytes: cert.Raw,
+				Bytes: c.Raw,
 			}
 			pemCerts = append(pemCerts, string(pem.EncodeToMemory(pemCert)))
 		}
@@ -84,10 +94,11 @@ func New(protocol string, c CertGetterOption) (Scribe, error) {
 	}
 }
 
-const DialTimeout = time.Duration(5) * time.Second
+const DialTimeout = 5 * time.Second
 
 type CertGetterOption struct {
-	Target     string
+	Target     net.IP
+	Port       string
 	ServerName string
 }
 
