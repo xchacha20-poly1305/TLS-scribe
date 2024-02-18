@@ -4,6 +4,7 @@ package scribe
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"net"
@@ -31,7 +32,6 @@ func (q *QuicCertGetter) GetCert(timeout time.Duration, conn net.Conn) (cert []*
 	}
 
 	tCfg := q.tlsConfig()
-	tCfg.NextProtos = []string{"h3"}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -52,4 +52,10 @@ func (q *QuicCertGetter) GetCert(timeout time.Duration, conn net.Conn) (cert []*
 	cert = qConn.ConnectionState().TLS.PeerCertificates
 
 	return
+}
+
+func (q *QuicCertGetter) tlsConfig() *tls.Config {
+	c := q.CertGetterOption.tlsConfig()
+	c.NextProtos = []string{"h3"}
+	return c
 }

@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// Execute get certificate directly
 func Execute(target, serverName string) (result string, err error) {
 	if !strings.Contains(target, "://") {
 		// Default to use https
@@ -71,6 +72,7 @@ type Scribe interface {
 	GetCert(time.Duration, net.Conn) ([]*x509.Certificate, error)
 }
 
+// New returns a new Scribe
 func New(protocol string, c CertGetterOption) (Scribe, error) {
 	switch protocol {
 	case "", "https", "tls":

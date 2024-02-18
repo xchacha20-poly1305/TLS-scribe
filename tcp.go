@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// TLSCertGetter used to get tcp-TLS certificate.
 type TLSCertGetter struct {
 	CertGetterOption
 }

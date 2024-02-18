@@ -35,19 +35,10 @@ Flags:
 
 # TODO
 
-* [ ] 更多文档、示例程序。
-
 * [x] QUIC 支持。
 
 # Credits
 
 * [spf13/cobra](https://github.com/spf13/cobra)
 
-
 * [SagerNet/quic-go](https://github.com/SagerNet/quic-go)
-
-* ~~[refraction-networking/utls](https://github.com/refraction-networking/utls)~~
-
-  为了防止获取证书被识别为恶意行为，我们使用了 uTLS 以期待能骗过对方的 waf XD。
-
-  由于效果不明显，并且引入 uTLS 会导致二进制体积增加，所以移除。

@@ -1,5 +1,6 @@
 package scribe
 
+// QuicCertGetter used to get QUIC certificate.
 type QuicCertGetter struct {
 	CertGetterOption
 }
