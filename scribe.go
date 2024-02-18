@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"errors"
+	"net"
 	"net/url"
 	"strings"
 )
@@ -21,12 +22,11 @@ func Execute(target, serverName string) (result string, err error) {
 		return
 	}
 
-	// 检测端口相关
 	p := u.Port()
 	if p == "" {
 		p = "443"
 	}
-	dest := u.Hostname() + ":" + p
+	dest := net.JoinHostPort(u.Hostname(), p)
 
 	if serverName == "" {
 		serverName = u.Hostname()
