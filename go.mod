@@ -3,7 +3,7 @@ module github.com/xchacha20-poly1305/TLS-scribe
 go 1.18
 
 require (
-	github.com/sagernet/quic-go v0.40.1-beta.2
+	github.com/sagernet/quic-go v0.40.1
 	github.com/spf13/cobra v1.8.0
 )
 
