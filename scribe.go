@@ -2,6 +2,7 @@ package scribe
 
 import (
 	"crypto/sha256"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
@@ -9,10 +10,10 @@ import (
 	"net"
 	"net/url"
 	"strings"
+	"time"
 )
 
 func Execute(target, serverName string) (result string, err error) {
-	var cert []*x509.Certificate
 	if !strings.Contains(target, "://") {
 		// Default to use https
 		target = "https://" + target
@@ -26,38 +27,28 @@ func Execute(target, serverName string) (result string, err error) {
 	if p == "" {
 		p = "443"
 	}
-	dest := net.JoinHostPort(u.Hostname(), p)
+	target = net.JoinHostPort(u.Hostname(), p)
 
 	if serverName == "" {
 		serverName = u.Hostname()
 	}
 	// log.Println("dest: ", dest, " sni: ", serverName)
 
-	q := u.Query()
-
-	switch strings.ToLower(u.Scheme) {
-	case "", "tls", "https":
-		// log.Println("https")
-		cert, err = GetRawCert(dest, serverName)
-		if err != nil {
-			return
-		}
-
-	case "quic", "h3", "http3":
-		// log.Println("quic")
-		cert, err = GetQuicRawCert(dest, serverName)
-		if err != nil {
-			return
-		}
-
-	default:
-		return "", errors.New("Unkonw protocol: " + u.Scheme)
+	g, err := New(strings.ToLower(u.Scheme), CertGetterOption{
+		Target:     target,
+		ServerName: serverName,
+	})
+	if err != nil {
+		return
+	}
+	cert, err := g.GetCert(DialTimeout, nil)
+	if err != nil {
+		return
 	}
 
-	// 导出结果
-	switch strings.ToLower(q.Get("fmt")) { // 获取查询字符串中指定的格式
+	q := u.Query()
+	switch strings.ToLower(q.Get("fmt")) {
 	case "sha256", "sha-256", "sha", "openssl", "fingerprint": // openssl fingerprint
-		// cert = fingerprintSHA256(c[len(c)-1])
 		result = fingerprintSHA256(cert[0])
 	default: // pem
 		pemCerts := make([]string, 0)
@@ -73,6 +64,36 @@ func Execute(target, serverName string) (result string, err error) {
 	}
 
 	return
+}
+
+type Scribe interface {
+	// GetCert returns target's certificate. If not provide a conn, it will create one by itself.
+	GetCert(time.Duration, net.Conn) ([]*x509.Certificate, error)
+}
+
+func New(protocol string, c CertGetterOption) (Scribe, error) {
+	switch protocol {
+	case "", "https", "tls":
+		return NewTLSCertGetter(c), nil
+	case "quic", "h3", "http3":
+		return NewQuicCertGetter(c), nil
+	default:
+		return nil, errors.New("unknown protocol")
+	}
+}
+
+const DialTimeout = time.Duration(5) * time.Second
+
+type CertGetterOption struct {
+	Target     string
+	ServerName string
+}
+
+func (c *CertGetterOption) tlsConfig() *tls.Config {
+	return &tls.Config{
+		ServerName:         c.ServerName,
+		InsecureSkipVerify: true,
+	}
 }
 
 func fingerprintSHA256(cert *x509.Certificate) string {
