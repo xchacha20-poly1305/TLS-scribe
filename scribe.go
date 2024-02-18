@@ -78,22 +78,15 @@ func Execute(target, serverName string) (result string, err error) {
 func fingerprintSHA256(cert *x509.Certificate) string {
 	hash := sha256.Sum256(cert.Raw)
 	hashStr := hex.EncodeToString(hash[:])
+	hashStr = strings.ToUpper(hashStr)
 
-	var result string
-	for len(hashStr) > 0 {
-		if len(hashStr) > 2 {
-			result += strings.ToUpper(hashStr[:2]) + ":"
-			hashStr = hashStr[2:]
-		} else {
-			result += strings.ToUpper(hashStr)
-			hashStr = ""
-		}
+	hashSli := strings.Split(hashStr, "")
+
+	var result []string
+	for i := 0; i < len(hashSli)-1; i += 2 {
+		appendSlice := strings.Join(hashSli[i:i+2], "")
+		result = append(result, appendSlice)
 	}
 
-	// 删除最后一个多余的冒号
-	if len(result) > 0 && result[len(result)-1:] == ":" {
-		result = result[:len(result)-1]
-	}
-
-	return result
+	return strings.Join(result, ":")
 }
